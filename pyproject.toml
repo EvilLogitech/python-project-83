@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "hexlet-code"
+version = "0.1.0"
+description = "Web page analyzer for SEO acceptance"
+authors = ["Viktor Shcherbakov <evil.logitech@gmail.com>"]
+license = "Freeware"
+readme = "README.md"
+packages = [{include = "page_analyzer"}]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: OS Independent",
+    "License :: Freeware",
+    "Natural Language :: English"
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Flask = "^2.3.3"
+gunicorn = "^21.2.0"
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^6.1.0"
+pytest = "^7.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
