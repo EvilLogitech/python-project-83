@@ -6,6 +6,6 @@ The hexlet-check.yml file is responsible for running these tests - do not delete
 
 
 [![Actions Status](https://github.com/EvilLogitech/python-project-83/workflows/hexlet-check/badge.svg)](https://github.com/EvilLogitech/python-project-83/actions)
-[![Page Analyzer Linter](https://github.com/EvilLogitech/python-project-83/actions/workflows/app-lint.yml)](https://github.com/EvilLogitech/python-project-83/actions/workflows/app-lint.yml/badge.svg)
+[![Page Analyzer Linter](https://github.com/EvilLogitech/python-project-83/actions/workflows/app-lint.yml/badge.svg)](https://github.com/EvilLogitech/python-project-83/actions/workflows/app-lint.yml)
 
 [Link on Render deployed package](https://page-analyzer-u8aj.onrender.com)

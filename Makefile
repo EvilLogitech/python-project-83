@@ -4,6 +4,9 @@ install:
 dev:
 		poetry run flask --app page_analyzer:app run
 
+mydev:
+		poetry run flask --app page_analyzer:app run --debug --host=172.18.167.62
+
 lint:
 		poetry run flake8 page_analyzer
 

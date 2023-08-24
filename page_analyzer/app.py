@@ -1,9 +1,13 @@
-from flask import Flask
+from flask import (Flask, redirect,
+                   render_template,
+                   request, flash,
+                   get_flashed_messages,
+                   url_for)
 
 
 app = Flask(__name__)
 
 
 @app.route('/')
-def main():
-    return 'Hello, newbie\n'
+def index():
+    return render_template('index.html')
