@@ -1,6 +1,7 @@
 .venv/
-dist/
+.env
+.coverage
 __pycache__
 setup.cfg
-.coverage
 coverage.xml
+test.py

@@ -1,0 +1,27 @@
+{% include 'header.html' %}
+  <h1>Сайты</h1>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover text-nowrap" data-test="urls">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Имя</th>
+          <th>Последняя проверка</th>
+          <th>Код ответа</th>
+        </tr>
+      </thead>
+      {% if sites %}
+        <tbody>
+        {% for site in sites %}
+          <tr>
+            <td>{{site.id}}</td>
+            <td><a href="/urls/{{site.id}}">{{site.name}}</a></td>
+            <td>{{site.created_at}}</td>
+            <td>{{site.responce_code}}</td>
+          </tr>
+        {% endfor %}
+        </tbody> 
+      {% endif %}
+    </table>
+  </div>
+{% include 'footer.html' %}
