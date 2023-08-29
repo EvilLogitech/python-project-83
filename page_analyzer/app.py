@@ -5,7 +5,6 @@ from flask import (Flask, redirect,
                    )
 import validators
 import psycopg2
-import datetime
 from urllib.parse import urlparse
 from dotenv import dotenv_values
 
@@ -32,25 +31,35 @@ def add_site():
         return render_template('index.html', messages=messages, url=url), 422
     url = parse_url(url)
     if not check_url_in_base(url):
-        add_url_to_base(url)
+        query = 'INSERT INTO urls (name) VALUES (%s)'
+        data = (url, )
+        insert_data_to_base(query, data)
+        flash('Страница успешно добавлена', 'success')
     query = 'SELECT id FROM urls WHERE name=%s'
     data = (url, )
     id = get_data_from_base(query, data)[0][0]
-    return redirect(f'urls/{id}'), 302
+    return redirect(f'/urls/{id}'), 302
 
 
 @app.get('/urls')
 def urls():
-    query = 'SELECT * FROM urls ORDER BY id DESC'
+    # query = 'SELECT * FROM urls ORDER BY id DESC'
     sites = []
+    query = 'SELECT t1.id, t1.name, t2.created_at, t2.status_code FROM '\
+            '(SELECT id, name FROM urls ORDER BY id DESC) AS t1 '\
+            'LEFT JOIN '\
+            '(SELECT DISTINCT ON (url_id) '\
+            'url_id, status_code, created_at FROM url_checks '\
+            'ORDER BY url_id, created_at DESC) AS t2 '\
+            'ON t1.id = t2.url_id'
     urls_ = get_data_from_base(query, ())
     for item in urls_:
         sites.append(
             {
                 "id": item[0],
                 "name": item[1],
-                "created_at": 'NOT NOW',
-                "responce_code": get_date(item[2])
+                "created_at": get_date(item[2]),
+                "status_code": item[3] or ''
             }
         )
     return render_template('urls.html', sites=sites)
@@ -61,26 +70,47 @@ def show_check_info(id):
     messages = get_flashed_messages(with_categories=True)
     query = 'SELECT * FROM urls WHERE id=%s'
     data = (id, )
-    url_data = get_data_from_base(query, data)[0]
+    query_data = get_data_from_base(query, data)
+    if not query_data:
+        return render_template('404.html', messages={}, url=""), 404
+    query_data = query_data[0]
     site = {
-        "id": url_data[0],
-        "name": url_data[1],
-        "created_at": get_date(url_data[2])
+        "id": query_data[0],
+        "name": query_data[1],
+        "created_at": get_date(query_data[2])
     }
-    checks = [{
-        "id": "1",
-        "responce_code": "200",
-        "h1": "Хедерище",
-        "title": "Заголовище",
-        "description": "Тестовая днина",
-        "created_at": "1666-01-02"
-    }]
+    query = 'SELECT * FROM url_checks WHERE url_id=%s ORDER BY id DESC'
+    data = (id, )
+    query_data = get_data_from_base(query, data)
+    checks = []
+    for check in query_data:
+        checks.append(
+            {
+                "id": check[0],
+                "status_code": check[2],
+                "h1": check[3],
+                "title": check[4],
+                "description": check[5],
+                "created_at": get_date(check[6])
+            }
+        )
     return render_template(
         'check_result.html',
         site=site,
         checks=checks,
         messages=messages
     )
+
+
+@app.post('/urls/<id>/checks')
+def make_url_check(id):
+    query = 'INSERT INTO url_checks '\
+            '(url_id, status_code, h1, title, description) '\
+            'VALUES (%s, %s, %s, %s, %s)'
+    data = (id, '666', '', '', '',)
+    insert_data_to_base(query, data)
+    flash('Страница успешно проверена', 'success')
+    return redirect(f'/urls/{id}'), 302
 
 
 def get_date(date):
@@ -136,13 +166,6 @@ def check_url_in_base(url):
         return False
     flash('Страница уже существует', 'info')
     return True
-
-
-def add_url_to_base(url):
-    query = 'INSERT INTO urls (name, created_at) VALUES (%s, %s)'
-    data = (url, datetime.date.today())
-    insert_data_to_base(query, data)
-    flash('Страница успешно добавлена', 'success')
 
 
 def get_connection():
