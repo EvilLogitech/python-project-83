@@ -13,7 +13,7 @@ from dotenv import dotenv_values
 ENV_VALUES = dotenv_values()
 DB_ACCESS = ENV_VALUES.get('DB_ACCESS')
 app = Flask(__name__)
-app.config['SECRET_KEY'] = ENV_VALUES.get('SECRET_KEY')
+app.secret_key = ENV_VALUES.get('SECRET_KEY')
 
 
 @app.get('/')
