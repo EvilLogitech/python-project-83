@@ -1,8 +1,10 @@
 from flask import (Flask, redirect,
                    render_template,
                    request, flash,
-                   get_flashed_messages
+                   get_flashed_messages,
+                   abort
                    )
+import requests
 import validators
 import psycopg2
 from urllib.parse import urlparse
@@ -66,13 +68,13 @@ def urls():
 
 
 @app.get('/urls/<id>')
-def show_check_info(id):
+def show_url_info(id):
     messages = get_flashed_messages(with_categories=True)
     query = 'SELECT * FROM urls WHERE id=%s'
     data = (id, )
     query_data = get_data_from_base(query, data)
     if not query_data:
-        return render_template('404.html', messages={}, url=""), 404
+        abort(404)
     query_data = query_data[0]
     site = {
         "id": query_data[0],
@@ -104,13 +106,33 @@ def show_check_info(id):
 
 @app.post('/urls/<id>/checks')
 def make_url_check(id):
-    query = 'INSERT INTO url_checks '\
-            '(url_id, status_code, h1, title, description) '\
-            'VALUES (%s, %s, %s, %s, %s)'
-    data = (id, '666', '', '', '',)
-    insert_data_to_base(query, data)
-    flash('Страница успешно проверена', 'success')
+    query = 'SELECT name FROM urls WHERE id=%s'
+    data = (id,)
+    query_data = get_data_from_base(query, data)
+    if not query_data:
+        abort(404)
+    url = query_data[0][0]
+    status_code = 500
+    try:
+        req = requests.get(url)
+        status_code = req.status_code
+    except Exception:
+        pass
+    if status_code > 400:
+        flash('Произошла ошибка при проверке', 'danger')
+    else:
+        query = 'INSERT INTO url_checks '\
+                '(url_id, status_code, h1, title, description) '\
+                'VALUES (%s, %s, %s, %s, %s)'
+        data = (id, status_code, '', '', '',)
+        insert_data_to_base(query, data)
+        flash('Страница успешно проверена', 'success')
     return redirect(f'/urls/{id}'), 302
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('404.html'), 404
 
 
 def get_date(date):
