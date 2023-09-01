@@ -16,19 +16,16 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.10"
 Flask = "^2.3.3"
-gunicorn = "^21.2.0"
-
-# Poetry pre-1.2.x style, Understood by Poetry 1.0-1.2
 psycopg2-binary = "^2.9.7"
 validators = "^0.21.2"
 python-dotenv = "^1.0.0"
 requests = "^2.31.0"
 beautifulsoup4 = "^4.12.2"
-[tool.poetry.dev-dependencies]
+gunicorn = "^20.1.0"
+
+# Poetry pre-1.2.x style, Understood by Poetry 1.0-1.2[tool.poetry.dev-dependencies]
 pytest = "^7.4.0"
 flake8 = "^6.1.0"
-
-[tool.poetry.group.dev.dependencies]
 pytest-cov = "^4.1.0"
 
 [build-system]

@@ -14,6 +14,8 @@ ___
 [![Test Coverage](https://api.codeclimate.com/v1/badges/8d3f18460e968fd04a7b/test_coverage)](https://codeclimate.com/github/EvilLogitech/python-project-83/test_coverage)
 ___
 
-### Установка и запуск прилозжения:
+### Установка и запуск приложения:
+
 make build - установка приложения и его зависимостей
+
 make start - запуск веб-сервера
