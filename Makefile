@@ -5,16 +5,19 @@ build:
 		./build.sh
 
 dev:
-		poetry run flask --app page_analyzer:app run
-
-mydev:
 		poetry run flask --app page_analyzer:app run --debug --host=172.18.167.62
 
 lint:
 		poetry run flake8 page_analyzer
 
+test:
+		poetry run pytest --cov
+
+remove:
+		python3 -m pip uninstall hexlet-code
+
 test-coverage:
-		poetry run pytest --cov=gendiff tests --cov-report xml
+		poetry run pytest --cov=gendiff tests/ --cov-report xml
 
 PORT ?= 8000
 start:
