@@ -2,19 +2,20 @@ from flask import (Flask, redirect,
                    render_template,
                    request, flash,
                    get_flashed_messages,
-                   abort
-                   )
+                   abort)
 import requests
 import validators
 import psycopg2
+import os
+from bs4 import BeautifulSoup
 from urllib.parse import urlparse
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 
 
-ENV_VALUES = dotenv_values()
-DB_ACCESS = ENV_VALUES.get('DB_ACCESS')
+load_dotenv()
+DATABASE_URL = os.getenv('DATABASE_URL')
 app = Flask(__name__)
-app.secret_key = ENV_VALUES.get('SECRET_KEY')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 
 @app.get('/')
@@ -118,13 +119,17 @@ def make_url_check(id):
         status_code = req.status_code
     except Exception:
         pass
-    if status_code > 400:
+    if status_code > 200:
         flash('Произошла ошибка при проверке', 'danger')
     else:
+        html_document = BeautifulSoup(req.text, 'html.parser')
+        h1 = get_h1(html_document)
+        title = get_title(html_document)
+        meta_description = get_description(html_document)
         query = 'INSERT INTO url_checks '\
                 '(url_id, status_code, h1, title, description) '\
                 'VALUES (%s, %s, %s, %s, %s)'
-        data = (id, status_code, '', '', '',)
+        data = (id, status_code, h1, title, meta_description,)
         insert_data_to_base(query, data)
         flash('Страница успешно проверена', 'success')
     return redirect(f'/urls/{id}'), 302
@@ -192,7 +197,22 @@ def check_url_in_base(url):
 
 def get_connection():
     try:
-        conn = psycopg2.connect(DB_ACCESS)
+        conn = psycopg2.connect(DATABASE_URL)
         return conn
     except Exception as e:
         flash(e, 'danger')
+
+
+def get_h1(html):
+    tag = html.find('h1')
+    return tag.text if tag else ''
+
+
+def get_description(html):
+    tag = html.find('meta', {'name': 'description'})
+    return tag.get('content') if tag else ''
+
+
+def get_title(html):
+    tag = html.find('title')
+    return tag.string if tag else ''
