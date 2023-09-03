@@ -19,7 +19,7 @@ jobs:
           sudo apt-get install postgresql-client
           sudo service postgresql start
           make install
-          psql -h $POSTGRES_HOST -d $POSTGRES_DB -U $POSTGRES_USER -W $POSTGRES_PASSWORD -f database.sql
+          psql -h $POSTGRES_HOST -d $POSTGRES_DB -U $POSTGRES_USER -w -f database.sql
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
