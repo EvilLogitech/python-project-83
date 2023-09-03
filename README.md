@@ -8,6 +8,8 @@ ___
 
 [![Page Analyzer Linter](https://github.com/EvilLogitech/python-project-83/actions/workflows/app-lint.yml/badge.svg)](https://github.com/EvilLogitech/python-project-83/actions/workflows/app-lint.yml)
 
+[![Page Analyzer Pytest](https://github.com/EvilLogitech/python-project-83/actions/workflows/app-test.yml/badge.svg)](https://github.com/EvilLogitech/python-project-83/actions/workflows/app-test.yml)
+
 ### CodeClimate
 [![Maintainability](https://api.codeclimate.com/v1/badges/8d3f18460e968fd04a7b/maintainability)](https://codeclimate.com/github/EvilLogitech/python-project-83/maintainability)
 
