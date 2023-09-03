@@ -24,7 +24,7 @@ def index():
     return render_template('index.html', messages=messages, url="")
 
 
-@app.post('/urls')
+@app.post('/')
 def add_site():
     url = request.form.get('url', '')
     errors = validate_url(url)

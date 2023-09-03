@@ -58,13 +58,13 @@ testdata = [
 @pytest.mark.parametrize("input, expected", testdata)
 def test_validator(client, input, expected):
     responce = client.post(
-        '/', data={'url': input}
+        '/urls', data={'url': input}
     )
     assert expected in responce.data
 
 
 def test_good_url(client):
     responce = client.post(
-        '/', data={'url': 'http://hexlet.io'}
+        '/urls', data={'url': 'http://hexlet.io'}
     )
     assert responce.status_code == 302
