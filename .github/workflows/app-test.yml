@@ -15,21 +15,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install poetry
-          sudo apt-get install postgresql
-          sudo apt-get install postgresql-client
-          sudo service postgresql start
           make install
-          psql -h $POSTGRES_HOST -d $POSTGRES_DB -U $POSTGRES_USER -w -f database.sql
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          POSTGRES_DB: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          URL_DATABASE: postgres://postgres:postgres@localhost/postgres
-      - name: Run pytest
-        run: |
-          make test
       - name: Test & publish code coverage
         uses: paambaati/codeclimate-action@v3.2.0
         env:
