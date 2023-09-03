@@ -8,7 +8,7 @@ readme = "README.md"
 packages = [{include = "page_analyzer"}]
 classifiers = [
     "Programming Language :: Python :: 3.10",
-    "Operating System :: OS Independent",
+    "Operating System :: Ubuntu",
     "License :: Freeware",
     "Natural Language :: English"
 ]

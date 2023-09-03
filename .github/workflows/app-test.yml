@@ -17,11 +17,10 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      - name: Install Pythin
+      - name: Install Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -29,11 +28,6 @@ jobs:
         run: |
           pip install poetry
           make install
-      - name: Connect to PostgreSQL
-        run: node client.js
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
       - name: Run pytest
         run: |
           make test
