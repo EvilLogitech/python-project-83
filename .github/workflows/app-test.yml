@@ -25,7 +25,6 @@ jobs:
           sudo apt-get install postgresql
           sudo apt-get install postgresql-client
           sudo service postgresql start
-          sudo -u postgres createdb postgres
           make build
       - name: Run pytest
         run: |
