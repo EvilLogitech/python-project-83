@@ -1,6 +1,6 @@
 name: app test
 
-on: push
+on: [push, workflow_dispatch]
 
 jobs:
   runner-job:
