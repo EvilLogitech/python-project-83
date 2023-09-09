@@ -1,21 +1,21 @@
-from flask import (Flask, redirect,
-                   render_template,
-                   request, flash,
-                   get_flashed_messages,
-                   abort)
+from page_analyzer.db_utils import (get_url_id, get_url_data,
+                                    get_url_checks_data,
+                                    get_urls_with_check_data,
+                                    is_url_in_base, add_url,
+                                    add_check_result)
+from flask import (Flask, redirect, render_template, abort,
+                   request, flash, get_flashed_messages)
+import os
 import requests
 import validators
-import psycopg2
-import os
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 
-
 load_dotenv()
-DATABASE_URL = os.getenv('DATABASE_URL')
+SECRET_KEY = os.getenv('SECRET_KEY')
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SECRET_KEY'] = SECRET_KEY
 
 
 @app.get('/')
@@ -34,70 +34,28 @@ def add_site():
         messages = get_flashed_messages(with_categories=True)
         return render_template('index.html', messages=messages, url=url), 422
     url = parse_url(url)
-    if not check_url_in_base(url):
-        query = 'INSERT INTO urls (name) VALUES (%s)'
-        data = (url, )
-        insert_data_to_base(query, data)
+    if is_url_in_base(url):
+        flash('Страница уже существует', 'info')
+    else:
+        add_url(url)
         flash('Страница успешно добавлена', 'success')
-    query = 'SELECT id FROM urls WHERE name=%s'
-    data = (url, )
-    id = get_data_from_base(query, data)[0][0]
+    id = get_url_id(url)
     return redirect(f'/urls/{id}'), 302
 
 
 @app.get('/urls')
 def urls():
-    # query = 'SELECT * FROM urls ORDER BY id DESC'
-    sites = []
-    query = 'SELECT t1.id, t1.name, t2.created_at, t2.status_code FROM '\
-            '(SELECT id, name FROM urls ORDER BY id DESC) AS t1 '\
-            'LEFT JOIN '\
-            '(SELECT DISTINCT ON (url_id) '\
-            'url_id, status_code, created_at FROM url_checks '\
-            'ORDER BY url_id, created_at DESC) AS t2 '\
-            'ON t1.id = t2.url_id'
-    urls_ = get_data_from_base(query, ())
-    for item in urls_:
-        sites.append(
-            {
-                "id": item[0],
-                "name": item[1],
-                "created_at": get_date(item[2]),
-                "status_code": item[3] or ''
-            }
-        )
+    sites = get_urls_with_check_data()
     return render_template('urls.html', sites=sites)
 
 
 @app.get('/urls/<id>')
 def show_url_info(id):
     messages = get_flashed_messages(with_categories=True)
-    query = 'SELECT * FROM urls WHERE id=%s'
-    data = (id, )
-    query_data = get_data_from_base(query, data)
-    if not query_data:
+    site = get_url_data(id)
+    if not site:
         abort(404)
-    query_data = query_data[0]
-    site = {
-        "id": query_data[0],
-        "name": query_data[1],
-        "created_at": get_date(query_data[2])
-    }
-    query = 'SELECT * FROM url_checks WHERE url_id=%s ORDER BY id DESC'
-    data = (id, )
-    query_data = get_data_from_base(query, data)
-    checks = []
-    for check in query_data:
-        checks.append(
-            {
-                "id": check[0],
-                "status_code": check[2],
-                "h1": check[3],
-                "title": check[4],
-                "description": check[5],
-                "created_at": get_date(check[6])
-            }
-        )
+    checks = get_url_checks_data(id)
     return render_template(
         'check_result.html',
         site=site,
@@ -108,30 +66,21 @@ def show_url_info(id):
 
 @app.post('/urls/<id>/checks')
 def make_url_check(id):
-    query = 'SELECT name FROM urls WHERE id=%s'
-    data = (id,)
-    query_data = get_data_from_base(query, data)
-    if not query_data:
+    url_data = get_url_data(id)
+    if not url_data:
         abort(404)
-    url = query_data[0][0]
     status_code = 500
     try:
-        req = requests.get(url)
+        req = requests.get(url_data['name'])
         status_code = req.status_code
     except Exception:
         pass
     if status_code > 200:
         flash('Произошла ошибка при проверке', 'danger')
     else:
-        html_document = BeautifulSoup(req.text, 'html.parser')
-        h1 = get_h1(html_document)
-        title = get_title(html_document)
-        meta_description = get_description(html_document)
-        query = 'INSERT INTO url_checks '\
-                '(url_id, status_code, h1, title, description) '\
-                'VALUES (%s, %s, %s, %s, %s)'
-        data = (id, status_code, h1, title, meta_description,)
-        insert_data_to_base(query, data)
+        url_check_data = {'status_code': status_code, 'id': id}
+        url_check_data = url_check_data | get_parsed_data(req.text)
+        add_check_result(url_check_data)
         flash('Страница успешно проверена', 'success')
     return redirect(f'/urls/{id}'), 302
 
@@ -145,10 +94,10 @@ def get_date(date):
     return date.date() if date else ''
 
 
-def validate_url(url_):
-    if len(url_) > 255:
+def validate_url(url):
+    if len(url) > 255:
         return 'URL превышает 255 символов'
-    if not validators.url(url_):
+    if not validators.url(url):
         return 'Некорректный URL'
 
 
@@ -157,63 +106,13 @@ def parse_url(url):
     return f'{parsed.scheme}://{parsed.hostname}'
 
 
-def get_data_from_base(query, data):
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(query, data)
-        result = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return result
-    except psycopg2.Error as e:
-        flash(e, 'danger')
-    except psycopg2.Warning as e:
-        flash(e, 'info')
-
-
-def insert_data_to_base(query, data):
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(query, data)
-        conn.commit()
-        cursor.close()
-        conn.close()
-    except psycopg2.Error as e:
-        flash(e, 'danger')
-    except psycopg2.Warning as e:
-        flash(e, 'warning')
-
-
-def check_url_in_base(url):
-    query = 'SELECT COUNT(*) FROM urls WHERE name=%s'
-    data = (url,)
-    result = get_data_from_base(query, data)[0][0]
-    if result == 0:
-        return False
-    flash('Страница уже существует', 'info')
-    return True
-
-
-def get_connection():
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        return conn
-    except Exception as e:
-        flash(e, 'danger')
-
-
-def get_h1(html):
+def get_parsed_data(html_text):
+    html = BeautifulSoup(html_text, 'html.parser')
+    parsed_data = {}
     tag = html.find('h1')
-    return tag.text if tag else ''
-
-
-def get_description(html):
+    parsed_data['h1'] = tag.text if tag else ''
     tag = html.find('meta', {'name': 'description'})
-    return tag.get('content') if tag else ''
-
-
-def get_title(html):
+    parsed_data['description'] = tag.get('content') if tag else ''
     tag = html.find('title')
-    return tag.string if tag else ''
+    parsed_data['title'] = tag.string if tag else ''
+    return parsed_data

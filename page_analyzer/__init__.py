@@ -1,8 +1,6 @@
-import page_analyzer.app as myapp
-# from page_analyzer.app import app
-app = myapp.app
-get_h1 = myapp.get_h1
-get_description = myapp.get_description
-get_title = myapp.get_title
+from page_analyzer.app import app as myapp
+from page_analyzer.app import get_parsed_data
 
-__all__ = ['app', 'get_h1', 'get_description', 'get_title']
+
+app = myapp
+__all__ = ['app', 'get_parsed_data']

@@ -1,0 +1,128 @@
+import os
+import psycopg2
+from psycopg_pool import ConnectionPool
+from psycopg.rows import dict_row
+from flask import flash
+from dotenv import load_dotenv
+
+
+load_dotenv()
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+try:
+    pool = ConnectionPool(DATABASE_URL)
+except (Exception, psycopg2.DatabaseError) as e:
+    print("Error with Postgresql connection", e)
+
+
+def is_url_in_base(url, pool=pool):
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                query = 'SELECT COUNT(*) FROM urls WHERE name=%s'
+                data = (url,)
+                result = cursor.execute(query, data).fetchone()
+        return True if result['count'] > 0 else False
+    except psycopg2.Error as e:
+        flash(e, 'danger')
+    except psycopg2.Warning as e:
+        flash(e, 'warning')
+
+
+def get_url_id(url, pool=pool):
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                query = 'SELECT id FROM urls WHERE name=%s'
+                data = (url, )
+                id = cursor.execute(query, data).fetchone()
+                if id:
+                    return id['id']
+                return
+    except psycopg2.Error as e:
+        flash(e, 'danger')
+    except psycopg2.Warning as e:
+        flash(e, 'warning')
+
+
+def get_urls_with_check_data(pool=pool):
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                query = 'SELECT '\
+                        't1.id, t1.name, t2.created_at, t2.status_code FROM '\
+                        '(SELECT id, name FROM urls ORDER BY id DESC) AS t1 '\
+                        'LEFT JOIN '\
+                        '(SELECT DISTINCT ON (url_id) '\
+                        'url_id, status_code, created_at FROM url_checks '\
+                        'ORDER BY url_id, created_at DESC) AS t2 '\
+                        'ON t1.id = t2.url_id'
+                return cursor.execute(query).fetchall()
+    except psycopg2.Error as e:
+        flash(e, 'danger')
+    except psycopg2.Warning as e:
+        flash(e, 'warning')
+
+
+def get_url_data(id, pool=pool):
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                query = 'SELECT * FROM urls WHERE id=%s'
+                data = (id, )
+                result = cursor.execute(query, data).fetchone()
+                if result:
+                    return result
+                return
+    except psycopg2.Error as e:
+        flash(e, 'danger')
+    except psycopg2.Warning as e:
+        flash(e, 'warning')
+
+
+def get_url_checks_data(id, pool=pool):
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=dict_row) as cursor:
+                query = 'SELECT * FROM url_checks '\
+                        'WHERE url_id=%s ORDER BY id DESC'
+                data = (id, )
+                return cursor.execute(query, data).fetchall()
+    except psycopg2.Error as e:
+        flash(e, 'danger')
+    except psycopg2.Warning as e:
+        flash(e, 'warning')
+
+
+def add_url(url, pool=pool):
+    try:
+        with pool.connection() as conn:
+            with conn.cursor() as cursor:
+                query = 'INSERT INTO urls (name) VALUES (%s)'
+                data = (url, )
+                cursor.execute(query, data)
+    except psycopg2.Error as e:
+        flash(e, 'danger')
+    except psycopg2.Warning as e:
+        flash(e, 'warning')
+
+
+def add_check_result(url_check_data, pool=pool):
+    try:
+        with pool.connection() as conn:
+            with conn.cursor() as cursor:
+                query = 'INSERT INTO url_checks '\
+                        '(url_id, status_code, h1, title, description) '\
+                        'VALUES (%s, %s, %s, %s, %s)'
+                data = (
+                    url_check_data['id'],
+                    url_check_data['status_code'],
+                    url_check_data['h1'],
+                    url_check_data['title'],
+                    url_check_data['description'],
+                )
+                cursor.execute(query, data)
+    except psycopg2.Error as e:
+        flash(e, 'danger')
+    except psycopg2.Warning as e:
+        flash(e, 'warning')
