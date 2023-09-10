@@ -2,19 +2,24 @@ import os
 import psycopg
 # from psycopg_pool import ConnectionPool
 from psycopg.rows import dict_row
-from flask import flash
 from dotenv import load_dotenv
 
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-try:
-    # pool = ConnectionPool(DATABASE_URL)
-    pool = None
-    conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
-except (Exception, psycopg.DatabaseError) as e:
-    print("Error with Postgresql connection", e)
+
+# Connection pool и постоянно висящее соединение падает на Render.com, на бесплатном тарифе
+def get_connection():
+    try:
+        # pool = ConnectionPool(DATABASE_URL)
+        connection = psycopg.connect(DATABASE_URL, row_factory=dict_row)
+        return connection
+    except (Exception, psycopg.DatabaseError) as e:
+        print("Error with Postgresql connection", e)
+pool = None
+
+conn = get_connection()
 
 
 def is_url_in_base(url, pool=pool):
@@ -26,10 +31,15 @@ def is_url_in_base(url, pool=pool):
             data = (url,)
             result = cursor.execute(query, data).fetchone()
         return True if result['count'] > 0 else False
+    # Костыль, чтобы не падал деплой на Render
+    except psycopg.OperationalError as e:
+        vars = globals()
+        vars['conn'] = get_connection()
+        is_url_in_base(url)
     except psycopg.Error as e:
-        flash(e, 'danger')
+        print(e, 'danger')
     except psycopg.Warning as e:
-        flash(e, 'warning')
+        print(e, 'warning')
 
 
 def get_url_id(url, pool=pool):
@@ -42,10 +52,14 @@ def get_url_id(url, pool=pool):
             if id:
                 return id['id']
             return
+    except psycopg.OperationalError as e:
+        vars = globals()
+        vars['conn'] = get_connection()
+        get_url_id(url)
     except psycopg.Error as e:
-        flash(e, 'danger')
+        print(e, 'danger')
     except psycopg.Warning as e:
-        flash(e, 'warning')
+        print(e, 'warning')
 
 
 def get_urls_with_check_data(pool=pool):
@@ -61,10 +75,14 @@ def get_urls_with_check_data(pool=pool):
                     'ORDER BY url_id, created_at DESC) AS t2 '\
                     'ON t1.id = t2.url_id'
             return cursor.execute(query).fetchall()
+    except psycopg.OperationalError as e:
+        vars = globals()
+        vars['conn'] = get_connection()
+        get_urls_with_check_data()
     except psycopg.Error as e:
-        flash(e, 'danger')
+        print(e, 'danger')
     except psycopg.Warning as e:
-        flash(e, 'warning')
+        print(e, 'warning')
 
 
 def get_url_data(id, pool=pool):
@@ -77,6 +95,10 @@ def get_url_data(id, pool=pool):
             if result:
                 return result
             return
+    except psycopg.OperationalError as e:
+        vars = globals()
+        vars['conn'] = get_connection()
+        get_url_data(id)
     except psycopg.Error as e:
         print(e, 'danger')
     except psycopg.Warning as e:
@@ -91,6 +113,10 @@ def get_url_checks_data(id, pool=pool):
                     'WHERE url_id=%s ORDER BY id DESC'
             data = (id, )
             return cursor.execute(query, data).fetchall()
+    except psycopg.OperationalError as e:
+        vars = globals()
+        vars['conn'] = get_connection()
+        get_url_checks_data(id)
     except psycopg.Error as e:
         print(e, 'danger')
     except psycopg.Warning as e:
@@ -105,6 +131,10 @@ def add_url(url, pool=pool):
             data = (url, )
             cursor.execute(query, data)
             conn.commit()
+    except psycopg.OperationalError as e:
+        vars = globals()
+        vars['conn'] = get_connection()
+        add_url(url)
     except psycopg.Error as e:
         print(e, 'danger')
     except psycopg.Warning as e:
@@ -127,6 +157,10 @@ def add_check_result(url_check_data, pool=pool):
             )
             cursor.execute(query, data)
             conn.commit()
+    except psycopg.OperationalError as e:
+        vars = globals()
+        vars['conn'] = get_connection()
+        add_check_result(url_check_data)
     except psycopg.Error as e:
         print(e, 'danger')
     except psycopg.Warning as e:
