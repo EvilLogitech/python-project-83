@@ -1,5 +1,4 @@
 import page_analyzer as myapp
-import pytest
 import os
 
 
