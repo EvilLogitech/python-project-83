@@ -1,6 +1,7 @@
 import os
 import psycopg
-# from psycopg_pool import ConnectionPool
+#from psycopg.extras import DictCursor
+from psycopg_pool import ConnectionPool
 from psycopg.rows import dict_row
 from dotenv import load_dotenv
 
@@ -10,15 +11,13 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 try:
-    pool = None  # ConnectionPool(DATABASE_URL)
     conn = psycopg.connect(DATABASE_URL)
 except (Exception, psycopg.DatabaseError) as e:
     print("Error with Postgresql connection", e)
 
 
-def is_url_in_base(url, pool=pool):
+def is_url_in_base(url):
     try:
-        # with pool.connection() as conn:
         with conn.cursor(row_factory=dict_row) as cursor:
             query = 'SELECT COUNT(*) FROM urls WHERE name=%s'
             data = (url,)
@@ -30,9 +29,8 @@ def is_url_in_base(url, pool=pool):
         print(e, 'warning')
 
 
-def get_url_id(url, pool=pool):
+def get_url_id(url):
     try:
-        # with pool.connection() as conn:
         with conn.cursor(row_factory=dict_row) as cursor:
             query = 'SELECT id FROM urls WHERE name=%s'
             data = (url, )
@@ -46,9 +44,8 @@ def get_url_id(url, pool=pool):
         print(e, 'warning')
 
 
-def get_urls_with_check_data(pool=pool):
+def get_urls_with_check_data():
     try:
-        # with pool.connection() as conn:
         with conn.cursor(row_factory=dict_row) as cursor:
             query = 'SELECT '\
                     't1.id, t1.name, t2.created_at, t2.status_code FROM '\
@@ -58,16 +55,16 @@ def get_urls_with_check_data(pool=pool):
                     'url_id, status_code, created_at FROM url_checks '\
                     'ORDER BY url_id, created_at DESC) AS t2 '\
                     'ON t1.id = t2.url_id'
-            return cursor.execute(query).fetchall()
+            result = cursor.execute(query).fetchall()
+            return result
     except psycopg.Error as e:
         print(e, 'danger')
     except psycopg.Warning as e:
         print(e, 'warning')
 
 
-def get_url_data(id, pool=pool):
+def get_url_data(id):
     try:
-        # with pool.connection() as conn:
         with conn.cursor(row_factory=dict_row) as cursor:
             query = 'SELECT * FROM urls WHERE id=%s'
             data = (id, )
@@ -81,23 +78,22 @@ def get_url_data(id, pool=pool):
         print(e, 'warning')
 
 
-def get_url_checks_data(id, pool=pool):
+def get_url_checks_data(id):
     try:
-        # with pool.connection() as conn:
         with conn.cursor(row_factory=dict_row) as cursor:
             query = 'SELECT * FROM url_checks '\
                     'WHERE url_id=%s ORDER BY id DESC'
             data = (id, )
-            return cursor.execute(query, data).fetchall()
+            result = cursor.execute(query, data).fetchall()
+            return result
     except psycopg.Error as e:
         print(e, 'danger')
     except psycopg.Warning as e:
         print(e, 'warning')
 
 
-def add_url(url, pool=pool):
+def add_url(url):
     try:
-        # with pool.connection() as conn:
         with conn.cursor() as cursor:
             query = 'INSERT INTO urls (name) VALUES (%s)'
             data = (url, )
@@ -109,9 +105,8 @@ def add_url(url, pool=pool):
         print(e, 'warning')
 
 
-def add_check_result(url_check_data, pool=pool):
+def add_check_result(url_check_data):
     try:
-        # with pool.connection() as conn:
         with conn.cursor() as cursor:
             query = 'INSERT INTO url_checks '\
                     '(url_id, status_code, h1, title, description) '\
