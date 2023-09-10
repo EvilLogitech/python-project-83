@@ -1,7 +1,7 @@
 import os
 import psycopg
-#from psycopg.extras import DictCursor
-from psycopg_pool import ConnectionPool
+# from psycopg.extras import DictCursor
+# from psycopg_pool import ConnectionPool
 from psycopg.rows import dict_row
 from dotenv import load_dotenv
 
