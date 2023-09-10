@@ -18,7 +18,7 @@ remove:
 		python3 -m pip uninstall hexlet-code
 
 test-coverage:
-		poetry run pytest --cov=gendiff tests/ --cov-report xml
+		poetry run pytest --cov=page_analyzer tests/ --cov-report xml
 
 PORT ?= 8000
 start:
