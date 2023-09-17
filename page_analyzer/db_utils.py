@@ -28,7 +28,6 @@ def is_url_in_base(url):
             cursor.close()
         finally:
             pool.putconn(conn)
-        print(result)
         return False if not result else (result.count > 0)
     except psycopg2.Error as e:
         print(e, 'danger')

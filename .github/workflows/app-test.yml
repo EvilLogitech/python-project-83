@@ -17,6 +17,8 @@ jobs:
           pip install poetry
           make install
       - name: Run pytest
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: |
           make test
       - name: Test & publish code coverage
