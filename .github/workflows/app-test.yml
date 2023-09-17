@@ -16,9 +16,9 @@ jobs:
         run: |
           pip install poetry
           make install
+          touch .env
+          echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
       - name: Run pytest
-        env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: |
           make test
       - name: Test & publish code coverage
