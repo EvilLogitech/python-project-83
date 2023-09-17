@@ -3,7 +3,7 @@ from page_analyzer.db_utils import (get_url_id, get_url_data,
                                     get_urls_with_check_data,
                                     is_url_in_base, add_url,
                                     add_check_result)
-from flask import (Flask, redirect, render_template, abort,
+from flask import (Flask, redirect, render_template, abort, url_for,
                    request, flash, get_flashed_messages)
 import os
 import requests
@@ -40,7 +40,7 @@ def add_site():
         add_url(url)
         flash('Страница успешно добавлена', 'success')
     id = get_url_id(url)
-    return redirect(f'/urls/{id}'), 302
+    return redirect(url_for('show_url_info', id=id)), 302
 
 
 @app.get('/urls')
@@ -71,7 +71,7 @@ def make_url_check(id):
         abort(404)
     status_code = 500
     try:
-        req = requests.get(url_data['name'])
+        req = requests.get(url_data.name)
         status_code = req.status_code
     except Exception:
         pass
@@ -82,7 +82,7 @@ def make_url_check(id):
         url_check_data = url_check_data | get_parsed_data(req.text)
         add_check_result(url_check_data)
         flash('Страница успешно проверена', 'success')
-    return redirect(f'/urls/{id}'), 302
+    return redirect(url_for('show_url_info', id=id)), 302
 
 
 @app.errorhandler(404)

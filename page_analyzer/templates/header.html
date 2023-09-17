@@ -9,9 +9,9 @@
   <body class="min-vh-100 d-flex flex-column">
     <header>
       <nav class="container-fluid navbar navbar-expand-lg navbar-dark bg-dark px-3">
-        <a href="/" class="navbar-brand">Анализатор страниц</a>
+        <a href="{{ url_for('index') }}" class="navbar-brand">Анализатор страниц</a>
         <div class="navbar-nav">
-          <a href="/urls" class="nav-link">Сайты</a>
+          <a href="{{ url_for('urls') }}" class="nav-link">Сайты</a>
         </div>
       </nav>
     </header>
