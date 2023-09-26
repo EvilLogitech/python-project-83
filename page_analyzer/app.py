@@ -90,7 +90,7 @@ def make_url_check(id):
 def not_found(e):
     if isinstance(e, NotFound):
         return render_template('404.html'), 404
-    return render_template('error.html', error = str(e))
+    return render_template('error.html', error=str(e))
 
 
 def validate_url(url):

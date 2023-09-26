@@ -60,7 +60,7 @@ def get_urls_with_check_data():
     with get_connection() as conn:
         result = None
         cursor = conn.cursor(cursor_factory=NamedTupleCursor)
-        query =  'SELECT '\
+        query = 'SELECT '\
                 't1.id, t1.name, t2.created_at, t2.status_code FROM '\
                 '(SELECT id, name FROM urls ORDER BY id DESC) AS t1 '\
                 'LEFT JOIN '\
