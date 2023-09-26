@@ -63,7 +63,7 @@ testdata = [
             'status_code': 200
         }],
         '/urls',
-        bytes('<a href="/urls/7">https://itecnote.com</a></td>', 'utf-8'),
+        bytes('<a href="/urls/7">https://itecnote.com</a>', 'utf-8'),
         200
     ),
     (
@@ -142,4 +142,5 @@ def test_post_urls_id_checks(client):
     test_responce.id = '1'
     page_analyzer.db_utils.pool = FakePool(test_responce)
     responce = client.post('/urls/1/checks', data={'url': 'http://hexlet.io'})
+    print(responce.text)
     assert responce.status_code == 302

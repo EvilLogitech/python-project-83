@@ -21,6 +21,9 @@ class FakeConnection():
     def commit(self):
         pass
 
+    def rollback(self):
+        pass
+
 
 class FakeCursor():
 

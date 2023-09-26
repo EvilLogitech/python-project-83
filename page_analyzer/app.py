@@ -11,6 +11,7 @@ import validators
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from dotenv import load_dotenv
+from werkzeug.exceptions import NotFound
 
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -85,13 +86,11 @@ def make_url_check(id):
     return redirect(url_for('show_url_info', id=id)), 302
 
 
-@app.errorhandler(404)
+@app.errorhandler(Exception)
 def not_found(e):
-    return render_template('404.html'), 404
-
-
-def get_date(date):
-    return date.date() if date else ''
+    if isinstance(e, NotFound):
+        return render_template('404.html'), 404
+    return render_template('error.html', error = str(e))
 
 
 def validate_url(url):
